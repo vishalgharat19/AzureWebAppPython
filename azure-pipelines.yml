@@ -50,4 +50,8 @@ steps:
       startUpCommand: "gunicorn --bind=0.0.0.0 --timeout 600 app:app"
       appSettings: |
         -SCM_DO_BUILD_DURING_DEPLOYMENT true
+<<<<<<< HEAD
     displayName: "Deploy to Azure Web App"
+=======
+    displayName: "Deploy to Azure Web App"
+>>>>>>> a62c711baac347cfd6c8922dfb08c5a609ddd3e3

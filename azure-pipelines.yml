@@ -4,7 +4,19 @@ trigger:
 pool:
   vmImage: "ubuntu-latest"
 
+variables:
+  pythonVersion: "3.14"
+  RESOURCE_GROUP: "webapp"
+  WEB_APP_NAME: "pythonapp19"
+  WEB_APP_PLAN: "ASP-webapp-ad42"
+  WEBSITE_LOCATION: "Canada Central"
+
 steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "$(pythonVersion)"
+    displayName: "Use Python $(pythonVersion)"
+
   - script: |
       python --version
       pip --version
@@ -15,6 +27,27 @@ steps:
     displayName: "Check Docker Version"
 
   - script: |
-      docker build -t myapp:latest .
-      docker run -d -p 5000:5000 myapp:latest
-    displayName: "Build and Run Docker Container"
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    displayName: "Install Python Dependencies"
+
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: "$(Build.SourcesDirectory)"
+      includeRootFolder: false
+      archiveType: "zip"
+      archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+      replaceExistingArchive: true
+    displayName: "Archive Application Files"
+
+  - task: AzureWebApp@1
+    inputs:
+      azureSubscription: "AzureWebAppPython"
+      appType: "webAppLinux"
+      appName: "$(WEB_APP_NAME)"
+      package: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+      runtimeStack: "PYTHON|3.14"
+      startUpCommand: "gunicorn --bind=0.0.0.0 --timeout 600 app:app"
+      appSettings: |
+        -SCM_DO_BUILD_DURING_DEPLOYMENT true
+    displayName: "Deploy to Azure Web App"
